@@ -1,13 +1,16 @@
 import {
   Box,
   Button,
+  Divider,
   Flex,
   Heading,
+  HStack,
   Icon,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
+  SimpleGrid,
   Skeleton,
   Stack,
   Table,
@@ -20,17 +23,25 @@ import {
   useBreakpointValue,
   useDisclosure,
   useToast,
+  VStack,
 } from '@chakra-ui/react'
 import Link from 'next/link'
 import { CaretDown, UserPlus } from 'phosphor-react'
 import { useEffect, useState } from 'react'
-import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore'
+import { collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore'
 
 import { Header } from '../../components/Header'
 import { Pagination } from '../../components/Pagination'
 import { Sidebar } from '../../components/Sidebar'
 import { db } from '../../services/firebase'
 import { ModalAction } from '../../components/ModalAction'
+import { ModalEdit } from '../../components/ModalToEdit'
+import { Input } from '../../components/Form/Input'
+import { SubmitHandler, useForm } from 'react-hook-form'
+import { UseFormData } from './create'
+import { userFormSchema } from '../../schemas/user'
+import { yupResolver } from '@hookform/resolvers/yup'
+import InputMask from 'react-input-mask'
 
 interface UserFromFirebase {
   id: string
@@ -50,8 +61,15 @@ interface UserFromFirebase {
 
 export default function UserList() {
   const [users, setUsers] = useState<UserFromFirebase[]>([])
-  const [userId, setUserId] = useState('')
+  const [user, setUser] = useState<UserFromFirebase>()
+  const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(false)
+  const [openToEdit, setOpenToEdit] = useState(false);
+
+  const { register, handleSubmit, formState } = useForm<UseFormData>({
+    resolver: yupResolver(userFormSchema),
+  })
+  const { errors } = formState
 
   const toast = useToast()
   const { isOpen, onOpen, onClose } = useDisclosure()
@@ -80,11 +98,17 @@ export default function UserList() {
     }
 
     loadUsers()
-  }, [])
+  }, [userId])
 
   function handleOpenModal(id: string) {
     setUserId(id)
     onOpen()
+  }
+
+  function handleOpenModalEdit(user: UserFromFirebase) {
+    setUser(user)
+    setUserId(user.id)
+    setOpenToEdit(true)
   }
 
   async function handleDeleteUser() {
@@ -110,6 +134,43 @@ export default function UserList() {
         duration: 5000,
         isClosable: true,
       })
+    }
+  }
+
+  const handleUpdateUser: SubmitHandler<UseFormData> = async (data) => {
+    try {
+      if (user) {
+        const userRef = doc(db, "users", user.id)
+        const updatedUser = {
+          name: data.name || user.name.stringValue,
+          email: data.email || user.email.stringValue,
+          cpf: data.cpf || user.cpf.stringValue,
+          cnpj: data.cnpj || user.cnpj.stringValue,
+        }
+
+        await updateDoc(userRef, updatedUser);
+        setUserId('')
+      }
+      
+      toast({
+        title: 'Usuário editado',
+        description: 'Usuário editado com sucesso',
+        status: 'success',
+        position: 'top',
+        duration: 5000,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: 'Erro ao criar',
+        description: 'Não foi possível editar o usuário, tente novamente',
+        status: 'error',
+        position: 'top',
+        duration: 5000,
+        isClosable: true,
+      })
+    } finally {
+      setOpenToEdit(false)
     }
   }
 
@@ -185,7 +246,7 @@ export default function UserList() {
                             Ações
                           </MenuButton>
                           <MenuList>
-                            <MenuItem>Editar</MenuItem>
+                            <MenuItem onClick={() => handleOpenModalEdit(user)}>Editar</MenuItem>
                             <MenuItem onClick={() => handleOpenModal(user.id)}>
                               Deletar
                             </MenuItem>
@@ -217,6 +278,78 @@ export default function UserList() {
         actionText="Remover usuário"
         onAction={handleDeleteUser}
       />
+
+      <ModalEdit
+        isOpen={openToEdit}
+        onClose={() => setOpenToEdit(false)}
+        title="Editar usuário"
+      >
+        <Box
+          as="form"
+          onSubmit={handleSubmit(handleUpdateUser)}
+          flex="1"
+          borderRadius={8}
+          p="4"
+        >
+          <VStack spacing="8">
+            <SimpleGrid minChildWidth="240px" spacing="4" w="100%">
+              <Input
+                label="Nome completo"
+                placeholder="Example Isow"
+                error={errors.name}
+                {...register('name')}
+                defaultValue={user?.name.stringValue}
+              />
+
+              <Input
+                label="E-mail"
+                placeholder="example@isow.com"
+                error={errors.email}
+                {...register('email')}
+                defaultValue={user?.email.stringValue}
+              />
+            </SimpleGrid>
+
+            <SimpleGrid minChildWidth="240px" spacing="4" w="100%">
+              <Input
+                as={InputMask}
+                mask="***.***.***-**"
+                label="CPF"
+                placeholder="000.000.000-00"
+                error={errors.cpf}
+                {...register('cpf')}
+                defaultValue={user?.cpf.stringValue}
+              />
+
+              <Input
+                as={InputMask}
+                mask="**.***.***/****-**"
+                label="Empresa"
+                placeholder="000.000.000/0000-00"
+                error={errors.cnpj}
+                {...register('cnpj')}
+                defaultValue={user?.cnpj.stringValue}
+              />
+            </SimpleGrid>
+          </VStack>
+
+          <Flex mt="8" justify="flex-end">
+            <HStack spacing="4">
+              <Button as="a" colorScheme="red" onClick={() => setOpenToEdit(false)}>
+                Cancelar
+              </Button>
+              <Button
+                bg="primary"
+                color="white"
+                _hover={{ bg: 'primaryHover' }}
+                type="submit"
+              >
+                Salvar
+              </Button>
+            </HStack>
+          </Flex>
+        </Box>
+      </ModalEdit>
     </>
   )
 }

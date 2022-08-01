@@ -22,7 +22,8 @@ import { addDoc, collection } from 'firebase/firestore'
 import { db } from '../../services/firebase'
 import { useRouter } from 'next/router'
 
-interface UseFormData {
+export interface UseFormData {
+  id?: string
   name: string
   email: string
   cpf: string
