@@ -22,7 +22,7 @@ import { Sidebar } from '../../components/Sidebar'
 import { companyFormSchema } from '../../schemas/company'
 import { db } from '../../services/firebase'
 
-interface CompanyFormData {
+export interface CompanyFormData {
   name: string
   email: string
   cnpj: string

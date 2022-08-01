@@ -3,11 +3,13 @@ import {
   Button,
   Flex,
   Heading,
+  HStack,
   Icon,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
+  SimpleGrid,
   Skeleton,
   Stack,
   Table,
@@ -20,17 +22,25 @@ import {
   useBreakpointValue,
   useDisclosure,
   useToast,
+  VStack,
 } from '@chakra-ui/react'
-import { collection, deleteDoc, doc, DocumentData, getDocs, QueryDocumentSnapshot } from 'firebase/firestore'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { collection, deleteDoc, doc, DocumentData, getDocs, QueryDocumentSnapshot, updateDoc } from 'firebase/firestore'
 import Link from 'next/link'
 import { CaretDown, Plus } from 'phosphor-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { SubmitHandler, useForm } from 'react-hook-form'
+import InputMask from 'react-input-mask'
+import { Input } from '../../components/Form/Input'
 
 import { Header } from '../../components/Header'
 import { ModalAction } from '../../components/ModalAction'
+import { ModalEdit } from '../../components/ModalToEdit'
 import { Pagination } from '../../components/Pagination'
 import { Sidebar } from '../../components/Sidebar'
+import { companyFormSchema } from '../../schemas/company'
 import { db } from '../../services/firebase'
+import { CompanyFormData } from './create'
 
 interface CompanyFromFirebase {
   id: string
@@ -53,8 +63,22 @@ interface FirebaseReturnData extends QueryDocumentSnapshot<DocumentData> {
 
 export default function CompaniesList() {
   const [companies, setCompanies] = useState<CompanyFromFirebase[]>([])
+  const [company, setCompany] = useState<CompanyFromFirebase>()
   const [companyId, setCompanyId] = useState('')
   const [loading, setLoading] = useState(false)
+  const [openToEdit, setOpenToEdit] = useState(false);
+
+  const { register, reset, handleSubmit, formState } = useForm<CompanyFormData>({
+    resolver: yupResolver(companyFormSchema),
+    defaultValues: useMemo(() => {
+      return {
+        name: company?.name?.stringValue,
+        email: company?.email?.stringValue,
+        cnpj: company?.cnpj?.stringValue,
+      }
+    }, [company])
+  })
+  const { errors } = formState
 
   const toast = useToast()
   const { isOpen, onOpen, onClose } = useDisclosure()
@@ -62,6 +86,14 @@ export default function CompaniesList() {
     base: false,
     md: true,
   })
+
+  useEffect(() => {
+    reset({
+      name: company?.name?.stringValue,
+      email: company?.email?.stringValue,
+      cnpj: company?.cnpj?.stringValue,
+    })
+  }, [company])
 
   useEffect(() => {
     async function loadCompanies() {
@@ -83,11 +115,23 @@ export default function CompaniesList() {
     }
 
     loadCompanies()
-  }, [])
+  }, [companyId])
 
   function handleOpenModal(id: string) {
     setCompanyId(id)
     onOpen()
+  }
+
+  function handleOpenModalEdit(company: CompanyFromFirebase) {
+    setCompany(company)
+    setCompanyId(company.id)
+    setOpenToEdit(true)
+  }
+
+  function handleCloseModalEdit() {
+    setCompany({} as CompanyFromFirebase)
+    setCompanyId('')
+    setOpenToEdit(false)
   }
 
   async function handleDeleteCompany() {
@@ -113,6 +157,43 @@ export default function CompaniesList() {
         duration: 5000,
         isClosable: true,
       })
+    }
+  }
+
+  const handleUpdateCompany: SubmitHandler<CompanyFormData> = async (data) => {
+    try {
+      if (company) {
+        const companyRef = doc(db, "companies", company.id)
+        const updatedCompany = {
+          name: data.name,
+          email: data.email,
+          cnpj: data.cnpj,
+        }
+
+        await updateDoc(companyRef, updatedCompany); 
+      }
+      
+      toast({
+        title: 'Empresa editada',
+        description: 'Empresa editada com sucesso',
+        status: 'success',
+        position: 'top',
+        duration: 5000,
+        isClosable: true,
+      })
+    } catch (error) {
+      toast({
+        title: 'Erro ao editar',
+        description: 'Não foi possível editar a empresa, tente novamente',
+        status: 'error',
+        position: 'top',
+        duration: 5000,
+        isClosable: true,
+      })
+    } finally {
+      setOpenToEdit(false)
+      setCompany({} as CompanyFromFirebase)
+      setCompanyId('')
     }
   }
 
@@ -188,7 +269,7 @@ export default function CompaniesList() {
                             Ações
                           </MenuButton>
                           <MenuList>
-                            <MenuItem>Editar</MenuItem>
+                            <MenuItem onClick={() => handleOpenModalEdit(company)}>Editar</MenuItem>
                             <MenuItem
                               onClick={() => handleOpenModal(company.id)}
                             >
@@ -222,6 +303,64 @@ export default function CompaniesList() {
         actionText="Remover empresa"
         onAction={handleDeleteCompany}
       />
+
+      <ModalEdit
+        isOpen={openToEdit}
+        onClose={handleCloseModalEdit}
+        title="Editar empresa"
+      >
+        <Box
+          as="form"
+          onSubmit={handleSubmit(handleUpdateCompany)}
+          flex="1"
+          borderRadius={8}
+          p="4"
+        >
+          <VStack spacing="8">
+            <SimpleGrid minChildWidth="240px" spacing="4" w="100%">
+              <Input
+                label="Razão Social"
+                placeholder="Isow LTDA"
+                error={errors.name}
+                {...register('name')}
+              />
+              <Input
+                label="E-mail"
+                placeholder="example@isow.com"
+                error={errors.email}
+                {...register('email')}
+              />
+            </SimpleGrid>
+
+            <SimpleGrid minChildWidth="240px" spacing="4" w="100%">
+              <Input
+                as={InputMask}
+                mask="**.***.***/****-**"
+                label="Empresa"
+                placeholder="000.000.000/0000-00"
+                error={errors.cnpj}
+                {...register('cnpj')}
+              />
+            </SimpleGrid>
+          </VStack>
+
+          <Flex mt="8" justify="flex-end">
+            <HStack spacing="4">
+              <Button as="a" colorScheme="red" onClick={handleCloseModalEdit}>
+                Cancelar
+              </Button>
+              <Button
+                bg="primary"
+                color="white"
+                _hover={{ bg: 'primaryHover' }}
+                type="submit"
+              >
+                Salvar
+              </Button>
+            </HStack>
+          </Flex>
+        </Box>
+      </ModalEdit>
     </>
   )
 }

@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react'
 import Link from 'next/link'
 import { CaretDown, UserPlus } from 'phosphor-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { collection, deleteDoc, doc, getDocs, updateDoc } from 'firebase/firestore'
 
 import { Header } from '../../components/Header'
@@ -66,8 +66,16 @@ export default function UserList() {
   const [loading, setLoading] = useState(false)
   const [openToEdit, setOpenToEdit] = useState(false);
 
-  const { register, handleSubmit, formState } = useForm<UseFormData>({
+  const { register, reset, handleSubmit, formState } = useForm<UseFormData>({
     resolver: yupResolver(userFormSchema),
+    defaultValues: useMemo(() => {
+      return {
+        name: user?.name?.stringValue,
+        email: user?.email?.stringValue,
+        cpf: user?.cpf?.stringValue,
+        cnpj: user?.cnpj?.stringValue,
+      }
+    }, [user])
   })
   const { errors } = formState
 
@@ -77,6 +85,15 @@ export default function UserList() {
     base: false,
     md: true,
   })
+
+  useEffect(() => {
+    reset({
+      name: user?.name?.stringValue,
+      email: user?.email?.stringValue,
+      cpf: user?.cpf?.stringValue,
+      cnpj: user?.cnpj?.stringValue,
+    })
+  }, [user])
 
   useEffect(() => {
     async function loadUsers() {
@@ -111,6 +128,12 @@ export default function UserList() {
     setOpenToEdit(true)
   }
 
+  function handleCloseModalEdit() {
+    setUser({} as UserFromFirebase)
+    setUserId('')
+    setOpenToEdit(false)
+  }
+
   async function handleDeleteUser() {
     try {
       await deleteDoc(doc(db, 'users', userId))
@@ -142,14 +165,13 @@ export default function UserList() {
       if (user) {
         const userRef = doc(db, "users", user.id)
         const updatedUser = {
-          name: data.name || user.name.stringValue,
-          email: data.email || user.email.stringValue,
-          cpf: data.cpf || user.cpf.stringValue,
-          cnpj: data.cnpj || user.cnpj.stringValue,
+          name: data.name,
+          email: data.email,
+          cpf: data.cpf,
+          cnpj: data.cnpj,
         }
 
-        await updateDoc(userRef, updatedUser);
-        setUserId('')
+        await updateDoc(userRef, updatedUser); 
       }
       
       toast({
@@ -162,7 +184,7 @@ export default function UserList() {
       })
     } catch (error) {
       toast({
-        title: 'Erro ao criar',
+        title: 'Erro ao editar',
         description: 'Não foi possível editar o usuário, tente novamente',
         status: 'error',
         position: 'top',
@@ -171,6 +193,8 @@ export default function UserList() {
       })
     } finally {
       setOpenToEdit(false)
+      setUser({} as UserFromFirebase)
+      setUserId('')
     }
   }
 
@@ -281,7 +305,7 @@ export default function UserList() {
 
       <ModalEdit
         isOpen={openToEdit}
-        onClose={() => setOpenToEdit(false)}
+        onClose={handleCloseModalEdit}
         title="Editar usuário"
       >
         <Box
@@ -298,7 +322,6 @@ export default function UserList() {
                 placeholder="Example Isow"
                 error={errors.name}
                 {...register('name')}
-                defaultValue={user?.name.stringValue}
               />
 
               <Input
@@ -306,7 +329,6 @@ export default function UserList() {
                 placeholder="example@isow.com"
                 error={errors.email}
                 {...register('email')}
-                defaultValue={user?.email.stringValue}
               />
             </SimpleGrid>
 
@@ -318,7 +340,6 @@ export default function UserList() {
                 placeholder="000.000.000-00"
                 error={errors.cpf}
                 {...register('cpf')}
-                defaultValue={user?.cpf.stringValue}
               />
 
               <Input
@@ -328,14 +349,13 @@ export default function UserList() {
                 placeholder="000.000.000/0000-00"
                 error={errors.cnpj}
                 {...register('cnpj')}
-                defaultValue={user?.cnpj.stringValue}
               />
             </SimpleGrid>
           </VStack>
 
           <Flex mt="8" justify="flex-end">
             <HStack spacing="4">
-              <Button as="a" colorScheme="red" onClick={() => setOpenToEdit(false)}>
+              <Button as="a" colorScheme="red" onClick={handleCloseModalEdit}>
                 Cancelar
               </Button>
               <Button
