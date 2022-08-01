@@ -14,15 +14,24 @@
     "@emotion/react": "^11.9.3",
     "@emotion/styled": "^11.9.3",
     "@eugustavo/eslint-config": "^1.0.0",
+    "@hookform/resolvers": "^2.9.7",
+    "apexcharts": "^3.35.4",
+    "firebase": "^9.9.1",
     "framer-motion": "^6.5.1",
     "next": "12.2.3",
+    "phosphor-react": "^1.4.1",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-apexcharts": "^1.4.0",
+    "react-dom": "18.2.0",
+    "react-hook-form": "^7.34.0",
+    "react-input-mask": "^2.0.4",
+    "yup": "^0.32.11"
   },
   "devDependencies": {
     "@types/node": "18.6.3",
     "@types/react": "18.0.15",
     "@types/react-dom": "18.0.6",
+    "@types/react-input-mask": "^3.0.1",
     "eslint": "8.20.0",
     "eslint-config-next": "12.2.3",
     "typescript": "4.7.4"

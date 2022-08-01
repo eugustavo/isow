@@ -1,5 +1,4 @@
-import Document, { Html, Main, NextScript } from 'next/document'
-import Head from 'next/head'
+import Document, { Head, Html, Main, NextScript } from 'next/document'
 
 export default class MyDocument extends Document {
   render() {
@@ -13,6 +12,7 @@ export default class MyDocument extends Document {
             rel="stylesheet"
           />
         </Head>
+
         <body>
           <Main />
           <NextScript />
