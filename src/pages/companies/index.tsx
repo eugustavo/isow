@@ -17,6 +17,7 @@ import {
   Th,
   Thead,
   Tr,
+  useBreakpointValue,
   useDisclosure,
   useToast,
 } from '@chakra-ui/react'
@@ -57,6 +58,10 @@ export default function CompaniesList() {
 
   const toast = useToast()
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const isWideVersion = useBreakpointValue({
+    base: false,
+    md: true,
+  })
 
   useEffect(() => {
     async function loadCompanies() {
@@ -152,7 +157,7 @@ export default function CompaniesList() {
                 <Thead>
                   <Tr>
                     <Th>Empresa</Th>
-                    <Th>CNPJ</Th>
+                    {isWideVersion && <Th>CPF</Th>}
                     <Th />
                   </Tr>
                 </Thead>
@@ -169,7 +174,7 @@ export default function CompaniesList() {
                           </Text>
                         </Box>
                       </Td>
-                      <Td>{company.cnpj.stringValue}</Td>
+                      {isWideVersion && <Td>{company.cnpj.stringValue}</Td>}
                       <Td>
                         <Menu>
                           <MenuButton

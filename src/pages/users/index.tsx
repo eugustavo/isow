@@ -155,7 +155,7 @@ export default function UserList() {
                   <Tr>
                     <Th>Usuário</Th>
                     {isWideVersion && <Th>CPF</Th>}
-                    <Th>Empresa</Th>
+                    {isWideVersion && <Th>Empresa</Th>}
                     <Th />
                   </Tr>
                 </Thead>
@@ -171,7 +171,7 @@ export default function UserList() {
                         </Box>
                       </Td>
                       {isWideVersion && <Td>{user.cpf.stringValue}</Td>}
-                      <Td>{user.cnpj.stringValue}</Td>
+                      {isWideVersion && <Td>{user.cnpj.stringValue}</Td>}
                       <Td>
                         <Menu>
                           <MenuButton
