@@ -105,7 +105,6 @@ export default function CreateCompany() {
               <Input
                 as={InputMask}
                 mask="**.***.***/****-**"
-                maskChar={null}
                 label="CNPJ"
                 placeholder="000.000.000/0000-00"
                 error={errors.cnpj}

@@ -20,7 +20,7 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react'
-import { collection, deleteDoc, doc, getDocs } from 'firebase/firestore'
+import { collection, deleteDoc, doc, DocumentData, getDocs, QueryDocumentSnapshot } from 'firebase/firestore'
 import Link from 'next/link'
 import { CaretDown, Plus } from 'phosphor-react'
 import { useEffect, useState } from 'react'
@@ -44,6 +44,12 @@ interface CompanyFromFirebase {
   }
 }
 
+interface FirebaseReturnData extends QueryDocumentSnapshot<DocumentData> {
+  _document: {
+    data: Object
+  }
+}
+
 export default function CompaniesList() {
   const [companies, setCompanies] = useState<CompanyFromFirebase[]>([])
   const [companyId, setCompanyId] = useState('')
@@ -58,7 +64,7 @@ export default function CompaniesList() {
       const query = await getDocs(collection(db, 'companies'))
       const companiesFromFirebase: CompanyFromFirebase[] = []
 
-      query.docs.forEach((doc) => {
+      query.docs.forEach((doc: any) => {
         companiesFromFirebase.push({
           id: doc.id,
           ...doc._document.data.value.mapValue.fields,
@@ -191,7 +197,7 @@ export default function CompaniesList() {
                 </Tbody>
               </Table>
             ) : (
-              <Box w="100%" align="center" py="12">
+              <Box w="100%" alignItems="center" py="12">
                 <Text fontSize="xl" fontWeight="bold" color="gray.400">
                   Nenhuma empresa encontrada
                 </Text>

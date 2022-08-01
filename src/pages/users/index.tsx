@@ -66,7 +66,7 @@ export default function UserList() {
       const query = await getDocs(collection(db, 'users'))
       const usersFromFirebase: UserFromFirebase[] = []
 
-      query.docs.forEach((doc) => {
+      query.docs.forEach((doc: any) => {
         usersFromFirebase.push({
           id: doc.id,
           ...doc._document.data.value.mapValue.fields,
@@ -197,7 +197,7 @@ export default function UserList() {
                 </Tbody>
               </Table>
             ) : (
-              <Box w="100%" align="center" py="12">
+              <Box w="100%" alignItems="center" py="12">
                 <Text fontSize="xl" fontWeight="bold" color="gray.400">
                   Nenhum usuário encontrado
                 </Text>

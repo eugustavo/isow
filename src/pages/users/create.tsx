@@ -107,7 +107,6 @@ export default function CreateUser() {
               <Input
                 as={InputMask}
                 mask="***.***.***-**"
-                maskChar={null}
                 label="CPF"
                 placeholder="000.000.000-00"
                 error={errors.cpf}
@@ -116,7 +115,6 @@ export default function CreateUser() {
               <Input
                 as={InputMask}
                 mask="**.***.***/****-**"
-                maskChar={null}
                 label="Empresa"
                 placeholder="000.000.000/0000-00"
                 error={errors.cnpj}

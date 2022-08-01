@@ -7,11 +7,14 @@ import {
 } from '@chakra-ui/react'
 import { forwardRef, ForwardRefRenderFunction } from 'react'
 import { FieldError } from 'react-hook-form'
+import { BeforeMaskedStateChangeStates } from 'react-input-mask'
+
 
 interface InputProps extends ChakraInputProps {
   name: string
   label?: string
   error?: FieldError
+  mask?: string
 }
 
 const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (

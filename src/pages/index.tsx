@@ -46,9 +46,9 @@ export default function Home() {
       if (user) {
         console.log(user)
         signIn({
-          name: user.displayName,
-          email: user.email,
-          avatar_url: user.photoURL,
+          name: user.displayName || '',
+          email: user.email || '',
+          avatar_url: user.photoURL || '',
         })
 
         toast({
@@ -86,8 +86,8 @@ export default function Home() {
 
       if (user) {
         signIn({
-          name: user.email.split('@')[0],
-          email: user.email,
+          name: user?.email?.split('@')[0] || '',
+          email: user.email || '',
         })
 
         toast({
